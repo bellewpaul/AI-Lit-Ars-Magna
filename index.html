@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ars Magna — Ramon Llull's Combinatorial Machine</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --parchment: #f5ead8;
+    --parchment-dark: #e8d5b0;
+    --parchment-deep: #d4b896;
+    --ink: #2a1f0e;
+    --ink-faded: #5c4a2a;
+    --red-ink: #8b1a1a;
+    --blue-ink: #1a3a6b;
+    --green-ink: #1a5c2a;
+    --gold: #b8860b;
+    --gold-light: #d4a017;
+    --border: #8b6914;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1208;
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  .outer-frame {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* MANUSCRIPT PAGE */
+  .manuscript {
+    background: var(--parchment);
+    border: 3px solid var(--border);
+    box-shadow: 0 0 0 8px #1a1208, 0 0 0 10px var(--gold), 0 0 40px rgba(0,0,0,0.8);
+    position: relative;
+    padding: 40px 50px;
+  }
+
+  /* Decorative corner flourishes */
+  .manuscript::before, .manuscript::after {
+    content: '✦';
+    position: absolute;
+    font-size: 24px;
+    color: var(--gold);
+    top: 14px;
+    left: 18px;
+  }
+  .manuscript::after { left: auto; right: 18px; }
+
+  /* Parchment texture overlay */
+  .parchment-texture {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(139,105,20,0.04) 28px, rgba(139,105,20,0.04) 29px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 30px;
+  }
+
+  .header .subtitle-top {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .header h1 span {
+    color: var(--red-ink);
+  }
+
+  .header .subtitle-bottom {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-faded);
+    margin-top: 8px;
+  }
+
+  .header .author {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    margin-top: 10px;
+    text-transform: uppercase;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .tab {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 24px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    color: var(--ink-faded);
+    transition: all 0.2s;
+    position: relative;
+    bottom: -2px;
+  }
+
+  .tab:hover { color: var(--ink); background: rgba(139,105,20,0.1); }
+  .tab.active {
+    background: var(--parchment);
+    border-color: var(--border);
+    color: var(--red-ink);
+    font-weight: 600;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ─── INTRO PANEL ─── */
+  .intro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+  }
+
+  .intro-block {
+    border: 1px solid var(--parchment-deep);
+    padding: 20px;
+    background: rgba(139,105,20,0.05);
+  }
+
+  .intro-block h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--red-ink);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--parchment-deep);
+  }
+
+  .intro-block p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink-faded);
+  }
+
+  .intro-block p + p { margin-top: 10px; }
+
+  /* Alphabet table */
+  .alphabet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  .alphabet-table th {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--parchment-deep);
+    text-align: left;
+  }
+  .alphabet-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid rgba(139,105,20,0.15);
+    vertical-align: top;
+  }
+  .alphabet-table td:first-child {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    color: var(--red-ink);
+    font-weight: 700;
+    width: 30px;
+  }
+  .alphabet-table td:nth-child(2) {
+    color: var(--blue-ink);
+    font-style: italic;
+    width: 120px;
+  }
+  .alphabet-table td:nth-child(3) {
+    color: var(--green-ink);
+    font-style: italic;
+  }
+  .alphabet-table td:nth-child(4) {
+    color: var(--ink-faded);
+    font-size: 13px;
+  }
+
+  /* ─── VOLVELLE PANEL ─── */
+  .volvelle-area {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .volvelle-container {
+    position: relative;
+    width: 380px;
+    height: 380px;
+    flex-shrink: 0;
+  }
+
+  #volvelle-svg {
+    width: 380px;
+    height: 380px;
+    cursor: grab;
+    filter: drop-shadow(3px 3px 8px rgba(0,0,0,0.3));
+  }
+
+  #volvelle-svg:active { cursor: grabbing; }
+
+  .ring-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .ring-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+  }
+
+  .ring-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    padding: 5px 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--ink-faded);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.15s;
+  }
+  .ring-btn:hover { background: var(--parchment-deep); color: var(--ink); }
+  .ring-btn.active { background: var(--ink); color: var(--parchment); border-color: var(--ink); }
+
+  /* Result panel */
+  .result-panel {
+    border: 1px solid var(--border);
+    padding: 24px;
+    background: rgba(139,105,20,0.04);
+    min-height: 280px;
+  }
+
+  .result-panel h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--red-ink);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--parchment-deep);
+  }
+
+  .current-combo {
+    font-family: 'Cinzel', serif;
+    font-size: 48px;
+    color: var(--ink);
+    letter-spacing: 8px;
+    margin-bottom: 6px;
+  }
+
+  .current-combo span { color: var(--red-ink); }
+
+  .combo-meaning {
+    font-size: 15px;
+    color: var(--ink-faded);
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  .divider-small {
+    border: none;
+    border-top: 1px solid var(--parchment-deep);
+    margin: 16px 0;
+  }
+
+  .proposition-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .proposition {
+    font-family: 'IM Fell English', serif;
+    font-size: 20px;
+    color: var(--ink);
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  .question-form {
+    font-size: 14px;
+    color: var(--ink-faded);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .all-combos-area {
+    margin-top: 20px;
+  }
+
+  .all-combos-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-faded);
+    margin-bottom: 8px;
+  }
+
+  .combo-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .combo-pill {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 1px solid var(--parchment-deep);
+    color: var(--ink-faded);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+
+  .combo-pill:hover {
+    background: var(--parchment-dark);
+    color: var(--ink);
+    border-color: var(--border);
+  }
+
+  .combo-pill.current {
+    background: var(--ink);
+    color: var(--parchment);
+    border-color: var(--ink);
+  }
+
+  /* ─── TABLE PANEL ─── */
+  .table-intro {
+    font-size: 15px;
+    color: var(--ink-faded);
+    line-height: 1.7;
+    margin-bottom: 20px;
+    font-style: italic;
+    border-left: 3px solid var(--gold);
+    padding-left: 16px;
+  }
+
+  .llull-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .llull-table th {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    color: var(--red-ink);
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    background: rgba(139,105,20,0.12);
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .llull-table td {
+    padding: 5px 6px;
+    border: 1px solid var(--parchment-deep);
+    text-align: center;
+    vertical-align: middle;
+    transition: background 0.15s;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--ink-faded);
+  }
+
+  .llull-table td:hover {
+    background: var(--parchment-dark);
+    color: var(--ink);
+  }
+
+  .llull-table td.highlighted {
+    background: #f5ead8;
+    color: var(--red-ink);
+    font-weight: 600;
+  }
+
+  .llull-table td.dim { opacity: 0.3; cursor: default; }
+
+  /* ─── PRINT PANEL ─── */
+  .print-intro {
+    font-size: 15px;
+    color: var(--ink-faded);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .print-instructions {
+    background: rgba(139,105,20,0.07);
+    border: 1px solid var(--parchment-deep);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .print-instructions h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--red-ink);
+    margin-bottom: 10px;
+  }
+
+  .print-instructions ol {
+    padding-left: 20px;
+    font-size: 14px;
+    color: var(--ink-faded);
+    line-height: 1.8;
+  }
+
+  .print-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 32px;
+    border: 2px solid var(--border);
+    background: var(--ink);
+    color: var(--parchment);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+    margin-right: 12px;
+    margin-bottom: 10px;
+  }
+
+  .print-btn:hover {
+    background: var(--red-ink);
+    border-color: var(--red-ink);
+  }
+
+  /* ─── DECORATIVE ─── */
+  .red-cap {
+    float: left;
+    font-family: 'Cinzel', serif;
+    font-size: 56px;
+    font-weight: 700;
+    color: var(--red-ink);
+    line-height: 0.8;
+    margin-right: 6px;
+    margin-top: 4px;
+  }
+
+  .section-ornament {
+    text-align: center;
+    color: var(--gold);
+    font-size: 18px;
+    letter-spacing: 8px;
+    margin: 24px 0 16px;
+  }
+
+  .folio {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    color: var(--parchment-deep);
+    letter-spacing: 2px;
+    text-align: right;
+    margin-top: 30px;
+    padding-top: 12px;
+    border-top: 1px solid var(--parchment-deep);
+  }
+
+  @media print {
+    body { background: white; }
+    .outer-frame { padding: 0; }
+    .manuscript { box-shadow: none; border: none; }
+    .tabs, .tab, .ring-controls, .print-btn { display: none !important; }
+    .panel { display: none !important; }
+    #panel-print { display: block !important; }
+    #print-volvelle-container { display: flex; flex-direction: column; align-items: center; }
+  }
+
+  /* tooltip */
+  .tooltip {
+    position: fixed;
+    background: var(--ink);
+    color: var(--parchment);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    padding: 6px 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 100;
+    max-width: 220px;
+    border-left: 3px solid var(--red-ink);
+  }
+  .tooltip.visible { opacity: 1; }
+
+  /* Drag instruction */
+  .drag-hint {
+    font-size: 12px;
+    color: var(--ink-faded);
+    font-style: italic;
+    text-align: center;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="outer-frame">
+<div class="manuscript">
+  <div class="parchment-texture"></div>
+  <div class="content">
+
+    <div class="header">
+      <div class="subtitle-top">Reconstructio Digitalis</div>
+      <h1>Ars M<span>agn</span>a</h1>
+      <div class="subtitle-bottom">The Great Art of Ramon Llull — An Interactive Instrument for Combining Truth</div>
+      <div class="author">Ramon Llull · Ars Brevis, 1308</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('intro')">Introduction</button>
+      <button class="tab" onclick="showTab('volvelle')">The Fourth Figure</button>
+      <button class="tab" onclick="showTab('table')">The Table</button>
+      <button class="tab" onclick="showTab('print')">Print & Assemble</button>
+    </div>
+
+    <!-- ═══ INTRO PANEL ═══ -->
+    <div id="panel-intro" class="panel active">
+      <p style="font-size:15px; line-height:1.8; margin-bottom:20px;">
+        <span class="red-cap">I</span>n the year 1308, the Majorcan philosopher Ramon Llull completed the <em>Ars Brevis</em> — a condensed version of his lifelong project, the <em>Ars Magna</em> or "Great Art." This was not merely a text to be read, but a <strong>machine for generating knowledge</strong>: a combinatorial device that could produce propositions, questions, and arguments by mechanically combining a set of fundamental principles. Llull believed these principles — divine attributes like Goodness, Greatness, and Wisdom — were the atoms of all reality, and that their combinations would unlock universal truth.
+      </p>
+
+      <div class="intro-grid">
+        <div class="intro-block">
+          <h3>The Nine Absolute Principles (Figure A)</h3>
+          <p>The first figure contains nine <em>dignities</em> — attributes of God that Llull considered the fundamental predicates of all being. Each is assigned a letter. Every proposition generated by the Art involves at least one of these principles as subject or predicate.</p>
+          <br>
+          <table class="alphabet-table">
+            <tr><th>Letter</th><th>Principle</th><th colspan="2">Definition</th></tr>
+            <tr><td>B</td><td>Goodness</td><td colspan="2">That by which good is done</td></tr>
+            <tr><td>C</td><td>Greatness</td><td colspan="2">That which has no place for smallness</td></tr>
+            <tr><td>D</td><td>Eternity</td><td colspan="2">That which has no beginning nor end</td></tr>
+            <tr><td>E</td><td>Power</td><td colspan="2">That by which all is done or undone</td></tr>
+            <tr><td>F</td><td>Wisdom</td><td colspan="2">That by which truth is distinguished from falsehood</td></tr>
+            <tr><td>G</td><td>Will</td><td colspan="2">That by which it agrees with all good</td></tr>
+            <tr><td>H</td><td>Virtue</td><td colspan="2">That by which power uses itself well</td></tr>
+            <tr><td>I</td><td>Truth</td><td colspan="2">That which renders the understanding truthful</td></tr>
+            <tr><td>K</td><td>Glory</td><td colspan="2">That with which the understanding is made glad</td></tr>
+          </table>
+        </div>
+
+        <div class="intro-block">
+          <h3>The Nine Relative Principles (Figure T)</h3>
+          <p>The second figure contains nine <em>relational</em> concepts, grouped in three triangles by color. These govern how the absolute principles relate to one another and to created things.</p>
+          <br>
+          <table class="alphabet-table">
+            <tr><th>Letter</th><th>Principle</th><th>Triad</th><th>Color</th></tr>
+            <tr><td>B</td><td>Difference</td><td>Ontological</td><td style="color:var(--green-ink)">Green</td></tr>
+            <tr><td>C</td><td>Concordance</td><td>Ontological</td><td style="color:var(--green-ink)">Green</td></tr>
+            <tr><td>D</td><td>Contrariety</td><td>Ontological</td><td style="color:var(--green-ink)">Green</td></tr>
+            <tr><td>E</td><td>Beginning</td><td>Temporal</td><td style="color:var(--red-ink)">Red</td></tr>
+            <tr><td>F</td><td>Middle</td><td>Temporal</td><td style="color:var(--red-ink)">Red</td></tr>
+            <tr><td>G</td><td>End</td><td>Temporal</td><td style="color:var(--red-ink)">Red</td></tr>
+            <tr><td>H</td><td>Majority</td><td>Quantitative</td><td style="color:var(--gold)">Yellow</td></tr>
+            <tr><td>I</td><td>Equality</td><td>Quantitative</td><td style="color:var(--gold)">Yellow</td></tr>
+            <tr><td>K</td><td>Minority</td><td>Quantitative</td><td style="color:var(--gold)">Yellow</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="intro-block" style="margin-bottom:20px;">
+        <h3>How to Use this Instrument</h3>
+        <p>The <strong>Ars Brevis</strong> operates through four figures. The Fourth Figure — a set of three rotating concentric circles — is the combinatorial engine. It generates every possible trio of letters (B through K), each letter standing for one of the nine absolute principles. Each combination of three letters generates a <em>compartment</em>: a proposition, question, and argumentation framework.</p>
+        <p style="margin-top:10px;">Navigate to <strong>The Fourth Figure</strong> tab to interact with the volvelle. Drag the rings to rotate them, then see the proposition generated. Navigate to <strong>The Table</strong> to see Llull's complete matrix of all 84 ternary combinations. Use <strong>Print & Assemble</strong> to create a physical paper volvelle.</p>
+      </div>
+
+      <div class="section-ornament">✦ ✦ ✦</div>
+
+      <div class="folio">Folio I · Introduction · Ramon Llull's Ars Brevis (1308)</div>
+    </div>
+
+    <!-- ═══ VOLVELLE PANEL ═══ -->
+    <div id="panel-volvelle" class="panel">
+      <div class="volvelle-area">
+        <div>
+          <div class="volvelle-container">
+            <svg id="volvelle-svg" viewBox="0 0 380 380" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="parchGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#f5ead8"/>
+                  <stop offset="100%" stop-color="#e0c898"/>
+                </radialGradient>
+                <radialGradient id="ringGrad1" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#e8d5b0"/>
+                  <stop offset="100%" stop-color="#c9a85c"/>
+                </radialGradient>
+                <filter id="inkshadow">
+                  <feDropShadow dx="1" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.3)"/>
+                </filter>
+              </defs>
+
+              <!-- Outer decorative ring -->
+              <circle cx="190" cy="190" r="188" fill="#8b6914" stroke="#5c4a2a" stroke-width="1"/>
+              <circle cx="190" cy="190" r="182" fill="none" stroke="#d4a017" stroke-width="1.5"/>
+
+              <!-- OUTER RING (fixed) - the 9 letters around outer circumference -->
+              <g id="ring-outer">
+                <circle cx="190" cy="190" r="178" fill="url(#parchGrad)" stroke="#8b6914" stroke-width="1.5"/>
+                <circle cx="190" cy="190" r="145" fill="#c9a85c" stroke="#8b6914" stroke-width="1"/>
+              </g>
+
+              <!-- MIDDLE RING (rotatable) -->
+              <g id="ring-middle">
+                <circle cx="190" cy="190" r="140" fill="url(#ringGrad1)" stroke="#8b6914" stroke-width="1.5"/>
+                <circle cx="190" cy="190" r="107" fill="#b8860b" stroke="#8b6914" stroke-width="1"/>
+              </g>
+
+              <!-- INNER RING (rotatable) -->
+              <g id="ring-inner">
+                <circle cx="190" cy="190" r="102" fill="url(#parchGrad)" stroke="#8b6914" stroke-width="1.5"/>
+                <circle cx="190" cy="190" r="70" fill="#8b6914" stroke="#5c4a2a" stroke-width="1"/>
+              </g>
+
+              <!-- CENTER -->
+              <circle cx="190" cy="190" r="65" fill="#f5ead8" stroke="#8b6914" stroke-width="1.5"/>
+              <circle cx="190" cy="190" r="8" fill="#8b6914"/>
+              <!-- Center text -->
+              <text x="190" y="183" text-anchor="middle" font-family="Cinzel" font-size="9" fill="#2a1f0e" letter-spacing="1">FIGURA</text>
+              <text x="190" y="198" text-anchor="middle" font-family="Cinzel" font-size="18" font-weight="700" fill="#8b1a1a">IV</text>
+
+              <!-- Letters will be drawn by JS -->
+              <g id="outer-letters"></g>
+              <g id="middle-letters"></g>
+              <g id="inner-letters"></g>
+
+              <!-- Dividing lines on outer ring -->
+              <g id="outer-dividers" stroke="#8b6914" stroke-width="0.8" opacity="0.5"></g>
+              <g id="middle-dividers" stroke="#5c4a2a" stroke-width="0.8" opacity="0.5"></g>
+              <g id="inner-dividers" stroke="#8b6914" stroke-width="0.8" opacity="0.5"></g>
+
+              <!-- Highlight indicator -->
+              <line id="indicator" x1="190" y1="10" x2="190" y2="30" stroke="#8b1a1a" stroke-width="2.5" opacity="0.8"/>
+              <polygon points="190,4 186,14 194,14" fill="#8b1a1a"/>
+            </svg>
+          </div>
+          <div class="ring-label">Drag each ring to rotate it</div>
+          <div class="ring-controls">
+            <button class="ring-btn active" id="btn-outer" onclick="selectRing('outer')">Outer</button>
+            <button class="ring-btn" id="btn-middle" onclick="selectRing('middle')">Middle</button>
+            <button class="ring-btn" id="btn-inner" onclick="selectRing('inner')">Inner</button>
+          </div>
+          <div class="drag-hint">← drag to rotate selected ring →</div>
+          <div style="text-align:center; margin-top:10px;">
+            <button class="ring-btn" onclick="randomize()" style="border-color:var(--gold);color:var(--gold);">✦ Randomize</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="result-panel">
+            <h3>Current Combination</h3>
+            <div class="current-combo" id="combo-display"><span>B</span>CD</div>
+            <div class="combo-meaning" id="combo-meaning-display">Goodness · Greatness · Eternity</div>
+            <hr class="divider-small">
+            <div class="proposition-label">Proposition (Affirmative)</div>
+            <div class="proposition" id="proposition-display">Goodness is Great by reason of Eternity.</div>
+            <div class="proposition-label" style="margin-top:12px;">Question</div>
+            <div class="question-form" id="question-display">Whether any goodness is as infinitely great as eternity? — Yes, for otherwise all the greatness of eternity would not be good.</div>
+          </div>
+
+          <div class="all-combos-area" style="margin-top:20px;">
+            <div class="all-combos-label">All 84 combinations (click any)</div>
+            <div class="combo-grid" id="combo-grid"></div>
+          </div>
+        </div>
+      </div>
+      <div class="folio">Folio II · The Fourth Figure · Figura Quarta</div>
+    </div>
+
+    <!-- ═══ TABLE PANEL ═══ -->
+    <div id="panel-table" class="panel">
+      <p class="table-intro">
+        The Table (<em>Tabula</em>) of the Ars Brevis lists all 84 possible ternary combinations of the nine letters B through K, without repetition of any letter in a given triplet. Llull arranged these into columns, each headed by a pair of letters that anchors the combination. Click any cell to see its meaning.
+      </p>
+      <div id="table-container" style="overflow-x:auto;"></div>
+      <div id="table-detail" style="margin-top:20px; padding:16px; border:1px solid var(--parchment-deep); background:rgba(139,105,20,0.05); min-height:80px; display:none;">
+        <div style="font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--red-ink); margin-bottom:6px;" id="detail-combo"></div>
+        <div style="font-size:16px; font-style:italic; color:var(--ink); margin-bottom:6px;" id="detail-meaning"></div>
+        <div style="font-size:14px; color:var(--ink-faded);" id="detail-prop"></div>
+      </div>
+      <div class="folio">Folio III · The Table · Tabula</div>
+    </div>
+
+    <!-- ═══ PRINT PANEL ═══ -->
+    <div id="panel-print" class="panel">
+      <p class="print-intro">
+        The volvelle below is designed to be printed, cut, and assembled with a brass brad (paper fastener) through the center. Print on cardstock for best results. The three concentric rings spin independently to generate the 84 ternary combinations of Llull's alphabet.
+      </p>
+      <div class="print-instructions">
+        <h4>Assembly Instructions</h4>
+        <ol>
+          <li>Print this page at 100% scale on cardstock (recommended) or heavy paper</li>
+          <li>Carefully cut out all three circles along the outer edge</li>
+          <li>Stack the circles from largest (bottom) to smallest (top), aligning the center holes</li>
+          <li>Push a brass brad through all three center holes to hold them together</li>
+          <li>Spread the brad tabs flat on the back — the rings should rotate freely</li>
+          <li>Use the index pointer at the top to read the current combination</li>
+        </ol>
+      </div>
+      <button class="print-btn" onclick="window.print()">⬛ Print Volvelle</button>
+      <button class="print-btn" onclick="downloadSVG()" style="background:var(--red-ink); border-color:var(--red-ink);">↓ Download SVG</button>
+
+      <div id="print-volvelle-container" style="margin-top:30px; display:flex; gap:40px; flex-wrap:wrap; justify-content:center;">
+        <!-- Print volvelles will be generated here -->
+      </div>
+      <div class="folio">Folio IV · Print & Assemble · Ad usum studentium</div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /manuscript -->
+</div><!-- /outer-frame -->
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+const LETTERS = ['B','C','D','E','F','G','H','I','K'];
+
+const ABSOLUTE = {
+  B: 'Goodness',  C: 'Greatness', D: 'Eternity',
+  E: 'Power',     F: 'Wisdom',    G: 'Will',
+  H: 'Virtue',    I: 'Truth',     K: 'Glory'
+};
+
+const RELATIVE = {
+  B: 'Difference', C: 'Concordance', D: 'Contrariety',
+  E: 'Beginning',  F: 'Middle',      G: 'End',
+  H: 'Majority',   I: 'Equality',    K: 'Minority'
+};
+
+// Pre-written propositions for a selection of key combinations
+// Format: [proposition, question]
+const PROPS = {
+  'BCD': ['Goodness is great by reason of its eternal nature.',
+          'Whether any goodness is as infinitely great as eternity? Yes, for otherwise all the greatness of eternity would not be good.'],
+  'BCE': ['Goodness has concordance with power; it begins in power.',
+          'Whether goodness and power are concordant? Yes, for otherwise there would be a defect in both.'],
+  'BCF': ['Goodness is concordant with wisdom at its middle term.',
+          'Whether wisdom can be good and of great wisdom? Yes, for otherwise it would not be wisdom.'],
+  'BCG': ['Goodness and concordance reach their end in will.',
+          'Whether will ends in what is good and great? Yes, for otherwise its end would lack perfection.'],
+  'BCH': ['Goodness is greater than the majority of created things.',
+          'Whether the greater thing is always good? Yes, for to be greater in what is good is better.'],
+  'BCI': ['Goodness and concordance are equal in truth.',
+          'Whether concordance and equality are good? Yes, for there is no defect in either.'],
+  'BCK': ['Goodness has concordance even with the least of created things.',
+          'Whether even the minority of good things participates in concordance? Yes, or else there would be no minority of good.'],
+  'BDE': ['Goodness differs from contrariety; eternity has no contrariety in power.',
+          'Whether difference and eternity can both be powerful? Yes, since each operates differently but without end.'],
+  'BDF': ['Goodness endures; contrariety has its middle in wisdom.',
+          'Whether eternity and contrariety apply to wisdom? Yes, for wisdom eternally contends against folly.'],
+  'BDG': ['Goodness differs from contrariety and finds its end in will.',
+          'Whether eternity and contrariety end in will? Yes, for the will finally resolves what is contrary.'],
+  'BDH': ['Goodness differs from contrariety in degree of majority.',
+          'Whether eternity and majority differ from contrariety? Yes, for eternity transcends all contraries.'],
+  'BDI': ['Goodness differs from contrariety; truth is equal in eternity.',
+          'Whether eternity and equality differ in truth? Yes, since eternity is uniform while equality may vary.'],
+  'BDK': ['Goodness and eternity differ from contrariety; even minority belongs to goodness.',
+          'Whether contrariety, eternity, and minority share in goodness? Yes, by participation.'],
+  'BEF': ['Goodness begins with power; wisdom is its middle.',
+          'Whether power and wisdom are both good? Yes, for a powerful and wise being cannot lack goodness.'],
+  'BEG': ['Goodness begins with power and ends in will.',
+          'Whether power ends in will? Yes, for will directs power to its proper end.'],
+  'BEH': ['Goodness and power are of great majority among first principles.',
+          'Whether power is greater in goodness? Yes, for the power to do good surpasses all other power.'],
+  'BEI': ['Goodness is equal in power and in truth.',
+          'Whether power and truth are equal in goodness? Yes, for each is perfectly good.'],
+  'BEK': ['Goodness begins with power; even the least thing has this beginning.',
+          'Whether even minority participates in good power? Yes, for all things are governed by it.'],
+  'BFG': ['Goodness finds its middle in wisdom and its end in will.',
+          'Whether wisdom ends in will? Yes, for wisdom orders what the will desires.'],
+  'BFH': ['Goodness is great through wisdom and majority.',
+          'Whether wisdom and majority increase goodness? Yes, for greater wisdom is better.'],
+  'BFI': ['Goodness is equal in wisdom and truth.',
+          'Whether truth and wisdom are equally good? Yes, for each reveals good in its proper domain.'],
+  'BFK': ['Goodness is found even in the least degree of wisdom.',
+          'Whether minority can be wise? Yes, for even a small degree of wisdom participates in good.'],
+  'BGH': ['Goodness reaches its end in will with great majority.',
+          'Whether will and majority tend toward goodness? Yes, for the greater the will toward good, the better.'],
+  'BGI': ['Goodness ends in will equally with truth.',
+          'Whether will and truth are equally at the end of goodness? Yes, for truth is the will\'s proper aim.'],
+  'BGK': ['Goodness ends in will even in minority.',
+          'Whether even the least thing ends in good will? Yes, for all being tends toward the good.'],
+  'BHI': ['Goodness is equally great in truth and majority.',
+          'Whether majority and truth are equal in goodness? Yes, for each is fully good.'],
+  'BHK': ['Goodness in majority and minority are concordant.',
+          'Whether majority and minority share in goodness? Yes, for both are degrees of being.'],
+  'BIK': ['Goodness is equal in truth even in the least degree.',
+          'Whether truth and minority are concordant in goodness? Yes, for truth admits no false degree.'],
+};
+
+// Generate propositions for all 84 combinations
+function getComboMeaning(combo) {
+  const [a, b, c] = combo.split('');
+  if (PROPS[combo]) return PROPS[combo];
+  // Generate dynamically
+  const abs = ABSOLUTE;
+  const rel = RELATIVE;
+  const getPrinciple = l => abs[l] || rel[l];
+  const p1 = abs[a] || rel[a];
+  const p2 = abs[b] || rel[b];
+  const p3 = abs[c] || rel[c];
+  // Try to make grammatically sensible
+  const prop = `${p1} is ${p2.toLowerCase()} by reason of ${p3.toLowerCase()}.`;
+  const q = `Whether ${p1.toLowerCase()} and ${p2.toLowerCase()} are truly concordant in ${p3.toLowerCase()}? Yes, for if there were a defect in any, it would impair the others.`;
+  return [prop, q];
+}
+
+// Generate all 84 ternary combos
+function genCombos() {
+  const res = [];
+  for(let i=0;i<9;i++)
+    for(let j=i+1;j<9;j++)
+      for(let k=j+1;k<9;k++)
+        res.push(LETTERS[i]+LETTERS[j]+LETTERS[k]);
+  return res;
+}
+const ALL_COMBOS = genCombos();
+
+// ═══════════════════════════════════════════════════════════════
+// VOLVELLE STATE
+// ═══════════════════════════════════════════════════════════════
+let outerAngle = 0;   // outer ring rotation (degrees)
+let middleAngle = 0;  // middle ring rotation
+let innerAngle = 0;   // inner ring rotation
+let selectedRing = 'outer';
+let isDragging = false;
+let dragStartAngle = 0;
+let dragStartRingAngle = 0;
+
+const CX = 190, CY = 190;
+const OUTER_R = 162, MIDDLE_R = 125, INNER_R = 87;
+
+function letterAngle(i, offset) {
+  // 9 letters equally spaced, starting at top (-90deg), plus offset
+  return (offset + (i * 40) - 90) * Math.PI / 180;
+}
+
+function drawLetters(groupId, radius, rotAngle, color, size) {
+  const g = document.getElementById(groupId);
+  g.innerHTML = '';
+  LETTERS.forEach((letter, i) => {
+    const a = letterAngle(i, rotAngle);
+    const x = CX + radius * Math.cos(a);
+    const y = CY + radius * Math.sin(a);
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x', x);
+    text.setAttribute('y', y);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'central');
+    text.setAttribute('font-family', 'Cinzel');
+    text.setAttribute('font-size', size);
+    text.setAttribute('font-weight', '700');
+    text.setAttribute('fill', color);
+    text.setAttribute('filter', 'url(#inkshadow)');
+    text.textContent = letter;
+    g.appendChild(text);
+
+    // dividing lines
+    const divId = groupId.replace('letters','dividers');
+    const divG = document.getElementById(divId);
+    const innerR = radius - 22, outerR2 = radius + 20;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    const ang2 = letterAngle(i, rotAngle) + (20 * Math.PI/180 * 0.5);
+    const midA = letterAngle(i + 0.5, rotAngle);
+    const x1 = CX + innerR * Math.cos(midA), y1 = CY + innerR * Math.sin(midA);
+    const x2 = CX + outerR2 * Math.cos(midA), y2 = CY + outerR2 * Math.sin(midA);
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    divG.appendChild(line);
+  });
+}
+
+function getTopLetter(rotAngle) {
+  // Which letter is closest to angle 270° (top)?
+  const normalized = (((-rotAngle % 360) + 360) % 360);
+  const idx = Math.round(normalized / 40) % 9;
+  return LETTERS[idx];
+}
+
+function updateDisplay() {
+  const outer = getTopLetter(outerAngle);
+  const middle = getTopLetter(middleAngle);
+  const inner = getTopLetter(innerAngle);
+
+  const letters = [outer, middle, inner].sort(); // Sort for canonical combo
+  const combo = letters.join('');
+
+  // Check if it's a valid 3-unique-letter combo
+  const uniqueLetters = new Set(letters);
+  const display = document.getElementById('combo-display');
+  const meaning = document.getElementById('combo-meaning-display');
+  const prop = document.getElementById('proposition-display');
+  const q = document.getElementById('question-display');
+
+  display.innerHTML = `<span>${outer}</span>${middle}${inner}`;
+
+  if (uniqueLetters.size === 3 && ALL_COMBOS.includes(combo)) {
+    const m1 = ABSOLUTE[letters[0]] || RELATIVE[letters[0]];
+    const m2 = ABSOLUTE[letters[1]] || RELATIVE[letters[1]];
+    const m3 = ABSOLUTE[letters[2]] || RELATIVE[letters[2]];
+    meaning.textContent = `${m1} · ${m2} · ${m3}`;
+    const [pr, qr] = getComboMeaning(combo);
+    prop.textContent = pr;
+    q.textContent = qr;
+
+    // Highlight in combo grid
+    document.querySelectorAll('.combo-pill').forEach(el => {
+      el.classList.toggle('current', el.dataset.combo === combo);
+    });
+    display.style.color = '';
+  } else if (uniqueLetters.size < 3) {
+    meaning.textContent = '— repeated letters: rotate to a valid combination —';
+    prop.textContent = '';
+    q.textContent = '';
+    display.style.color = '#8b6914';
+  } else {
+    meaning.textContent = '...';
+    prop.textContent = '';
+    q.textContent = '';
+  }
+}
+
+function drawVolvelle() {
+  document.getElementById('outer-dividers').innerHTML = '';
+  document.getElementById('middle-dividers').innerHTML = '';
+  document.getElementById('inner-dividers').innerHTML = '';
+  drawLetters('outer-letters', OUTER_R, outerAngle, '#2a1f0e', '18');
+  drawLetters('middle-letters', MIDDLE_R, middleAngle, '#f5ead8', '16');
+  drawLetters('inner-letters', INNER_R, innerAngle, '#2a1f0e', '14');
+  updateDisplay();
+}
+
+function selectRing(ring) {
+  selectedRing = ring;
+  ['outer','middle','inner'].forEach(r => {
+    document.getElementById('btn-'+r).classList.toggle('active', r===ring);
+  });
+}
+
+function randomize() {
+  outerAngle = Math.floor(Math.random() * 9) * 40;
+  middleAngle = Math.floor(Math.random() * 9) * 40;
+  innerAngle = Math.floor(Math.random() * 9) * 40;
+  // Ensure unique letters
+  let attempts = 0;
+  while(attempts < 50) {
+    const a = getTopLetter(outerAngle), b = getTopLetter(middleAngle), c = getTopLetter(innerAngle);
+    if(a!==b && b!==c && a!==c) break;
+    if(attempts % 3 === 0) outerAngle = (outerAngle + 40) % 360;
+    else if(attempts % 3 === 1) middleAngle = (middleAngle + 40) % 360;
+    else innerAngle = (innerAngle + 40) % 360;
+    attempts++;
+  }
+  drawVolvelle();
+}
+
+// Drag to rotate
+const svg = document.getElementById('volvelle-svg');
+
+function getAngleFromCenter(e) {
+  const rect = svg.getBoundingClientRect();
+  const x = (e.clientX || e.touches[0].clientX) - rect.left - rect.width / 2;
+  const y = (e.clientY || e.touches[0].clientY) - rect.top - rect.height / 2;
+  return Math.atan2(y, x) * 180 / Math.PI;
+}
+
+svg.addEventListener('mousedown', e => {
+  isDragging = true;
+  dragStartAngle = getAngleFromCenter(e);
+  dragStartRingAngle = selectedRing === 'outer' ? outerAngle : selectedRing === 'middle' ? middleAngle : innerAngle;
+  e.preventDefault();
+});
+
+svg.addEventListener('touchstart', e => {
+  isDragging = true;
+  dragStartAngle = getAngleFromCenter(e);
+  dragStartRingAngle = selectedRing === 'outer' ? outerAngle : selectedRing === 'middle' ? middleAngle : innerAngle;
+}, {passive:true});
+
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const cur = getAngleFromCenter(e);
+  const delta = cur - dragStartAngle;
+  const newAngle = dragStartRingAngle + delta;
+  if(selectedRing === 'outer') outerAngle = newAngle;
+  else if(selectedRing === 'middle') middleAngle = newAngle;
+  else innerAngle = newAngle;
+  drawVolvelle();
+});
+
+window.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  const cur = getAngleFromCenter(e);
+  const delta = cur - dragStartAngle;
+  const newAngle = dragStartRingAngle + delta;
+  if(selectedRing === 'outer') outerAngle = newAngle;
+  else if(selectedRing === 'middle') middleAngle = newAngle;
+  else innerAngle = newAngle;
+  drawVolvelle();
+}, {passive:true});
+
+window.addEventListener('mouseup', () => {
+  if (!isDragging) return;
+  isDragging = false;
+  // Snap to nearest letter
+  if(selectedRing === 'outer') outerAngle = Math.round(outerAngle / 40) * 40;
+  else if(selectedRing === 'middle') middleAngle = Math.round(middleAngle / 40) * 40;
+  else innerAngle = Math.round(innerAngle / 40) * 40;
+  drawVolvelle();
+});
+window.addEventListener('touchend', () => {
+  if (!isDragging) return;
+  isDragging = false;
+  if(selectedRing === 'outer') outerAngle = Math.round(outerAngle / 40) * 40;
+  else if(selectedRing === 'middle') middleAngle = Math.round(middleAngle / 40) * 40;
+  else innerAngle = Math.round(innerAngle / 40) * 40;
+  drawVolvelle();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// COMBO GRID
+// ═══════════════════════════════════════════════════════════════
+function buildComboGrid() {
+  const grid = document.getElementById('combo-grid');
+  ALL_COMBOS.forEach(combo => {
+    const pill = document.createElement('button');
+    pill.className = 'combo-pill';
+    pill.dataset.combo = combo;
+    pill.textContent = combo;
+    pill.onclick = () => setCombo(combo);
+    grid.appendChild(pill);
+  });
+}
+
+function setCombo(combo) {
+  const [a, b, c] = combo.split('');
+  // Find positions of letters
+  outerAngle = -(LETTERS.indexOf(a) * 40) + 0; // outer shows 'a' at top
+  // We want getTopLetter(outerAngle) = a, i.e. -outerAngle/40 % 9 = index
+  outerAngle = -(LETTERS.indexOf(a) * 40);
+  middleAngle = -(LETTERS.indexOf(b) * 40);
+  innerAngle = -(LETTERS.indexOf(c) * 40);
+  // Verify
+  drawVolvelle();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TABLE
+// ═══════════════════════════════════════════════════════════════
+function buildTable() {
+  // Arrange 84 combos into Llull's table structure:
+  // Columns headed by pairs BC, BD, BE, BF, BG, BH, BI, BK, CD, CE...
+  // Each column has 20 rows (all 3rd letters except the two in the header)
+  // Actually Llull's table has columns for each "first pair" and rows for each third letter
+  // Let's do: rows = first letter (B..K), columns = second letter (> row), cell = all third letters
+  const container = document.getElementById('table-container');
+
+  // Build 9x9 matrix where cell[i][j] shows the combo
+  let html = '<table class="llull-table"><thead><tr><th>╲</th>';
+  for(let j=1;j<9;j++) html += `<th>${LETTERS[j]}</th>`;
+  html += '</tr></thead><tbody>';
+
+  for(let i=0;i<8;i++) {
+    html += `<tr><td style="font-family:'Cinzel',serif;font-size:16px;color:var(--red-ink);background:rgba(139,105,20,0.12);font-weight:600;">${LETTERS[i]}</td>`;
+    for(let j=1;j<9;j++) {
+      if(j<=i) {
+        html += `<td class="dim">—</td>`;
+      } else {
+        const combo = [LETTERS[i],LETTERS[j]].sort().join('');
+        // Find all combos that contain exactly these two letters
+        const matches = ALL_COMBOS.filter(c => c.includes(LETTERS[i]) && c.includes(LETTERS[j]));
+        const firstMatch = matches[0];
+        html += `<td onclick="showTableDetail('${firstMatch}')" title="${matches.map(m=>m).join(', ')}">${LETTERS[i]}${LETTERS[j]}·</td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function showTableDetail(combo) {
+  const detail = document.getElementById('table-detail');
+  detail.style.display = 'block';
+  const letters = combo.split('');
+  const names = letters.map(l => (ABSOLUTE[l]||RELATIVE[l]));
+  document.getElementById('detail-combo').textContent = combo + ' — ' + names.join(' · ');
+  const [pr, qr] = getComboMeaning(combo);
+  document.getElementById('detail-meaning').textContent = names[0] + ', ' + names[1] + ', ' + names[2];
+  document.getElementById('detail-prop').textContent = pr + ' || ' + qr;
+
+  // Highlight the whole cell area -- find related combos
+  document.querySelectorAll('.llull-table td').forEach(td => {
+    td.classList.remove('highlighted');
+    if(td.textContent.replace('·','').length === 2) {
+      const pair = td.textContent.replace('·','');
+      if(combo.includes(pair[0]) && combo.includes(pair[1])) td.classList.add('highlighted');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRINT VOLVELLES
+// ═══════════════════════════════════════════════════════════════
+function buildPrintVolvelles() {
+  const container = document.getElementById('print-volvelle-container');
+
+  // Generate 3 separate SVGs (to be cut and stacked)
+  const sizes = [
+    {r: 180, inner: 145, label: 'OUTER RING (Bottom)', color: '#f5ead8', textColor: '#2a1f0e', borderColor: '#8b6914'},
+    {r: 145, inner: 107, label: 'MIDDLE RING (Centre)', color: '#e8d5b0', textColor: '#1a3a6b', borderColor: '#5c4a2a'},
+    {r: 107, inner: 70, label: 'INNER RING (Top)', color: '#f5ead8', textColor: '#8b1a1a', borderColor: '#8b6914'},
+  ];
+
+  sizes.forEach((s, idx) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.textAlign = 'center';
+
+    const label = document.createElement('div');
+    label.style.cssText = 'font-family:Cinzel,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-faded);margin-bottom:8px;';
+    label.textContent = `${idx+1}. ${s.label}`;
+    wrapper.appendChild(label);
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg2 = document.createElementNS(svgNS,'svg');
+    const dim = (s.r + 5) * 2;
+    svg2.setAttribute('width', dim);
+    svg2.setAttribute('height', dim);
+    svg2.setAttribute('viewBox', `0 0 ${dim} ${dim}`);
+    svg2.setAttribute('xmlns', svgNS);
+    const cx = s.r+5, cy = s.r+5;
+
+    // Outer circle (cut line, dashed)
+    const cutCircle = document.createElementNS(svgNS,'circle');
+    cutCircle.setAttribute('cx',cx); cutCircle.setAttribute('cy',cy);
+    cutCircle.setAttribute('r', s.r);
+    cutCircle.setAttribute('fill', s.color);
+    cutCircle.setAttribute('stroke', s.borderColor); cutCircle.setAttribute('stroke-width','1.5');
+    cutCircle.setAttribute('stroke-dasharray', '6,3');
+    svg2.appendChild(cutCircle);
+
+    // Inner border
+    const inner = document.createElementNS(svgNS,'circle');
+    inner.setAttribute('cx',cx); inner.setAttribute('cy',cy);
+    inner.setAttribute('r', s.inner);
+    inner.setAttribute('fill', 'none');
+    inner.setAttribute('stroke', s.borderColor); inner.setAttribute('stroke-width','1');
+    svg2.appendChild(inner);
+
+    // Letters
+    LETTERS.forEach((letter, i) => {
+      const radius = (s.r + s.inner) / 2;
+      const angle = (i * 40 - 90) * Math.PI / 180;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+
+      // divider line
+      const midAngle = ((i+0.5) * 40 - 90) * Math.PI / 180;
+      const line = document.createElementNS(svgNS,'line');
+      line.setAttribute('x1', cx + (s.inner)*Math.cos(midAngle));
+      line.setAttribute('y1', cy + (s.inner)*Math.sin(midAngle));
+      line.setAttribute('x2', cx + s.r*Math.cos(midAngle));
+      line.setAttribute('y2', cy + s.r*Math.sin(midAngle));
+      line.setAttribute('stroke', s.borderColor); line.setAttribute('stroke-width','0.5'); line.setAttribute('opacity','0.5');
+      svg2.appendChild(line);
+
+      const t = document.createElementNS(svgNS,'text');
+      t.setAttribute('x',x); t.setAttribute('y',y);
+      t.setAttribute('text-anchor','middle'); t.setAttribute('dominant-baseline','central');
+      t.setAttribute('font-family','Cinzel,serif');
+      t.setAttribute('font-size','16'); t.setAttribute('font-weight','700');
+      t.setAttribute('fill', s.textColor);
+      t.textContent = letter;
+      svg2.appendChild(t);
+
+      // Small principle name
+      const nameRadius = radius - (idx === 0 ? 20 : idx === 1 ? 18 : 15);
+      const nx = cx + nameRadius * Math.cos(angle);
+      const ny = cy + nameRadius * Math.sin(angle);
+      const nt = document.createElementNS(svgNS,'text');
+      nt.setAttribute('x',nx); nt.setAttribute('y',ny);
+      nt.setAttribute('text-anchor','middle'); nt.setAttribute('dominant-baseline','central');
+      nt.setAttribute('font-family','Cormorant Garamond,serif');
+      nt.setAttribute('font-size', idx===0?'7':'6');
+      nt.setAttribute('fill', s.textColor); nt.setAttribute('opacity','0.7');
+      // Rotate text to be readable
+      const deg = i * 40 - 90;
+      nt.setAttribute('transform', `rotate(${deg + (deg > 90 ? 180 : 0)},${nx},${ny})`);
+      nt.textContent = ABSOLUTE[letter] || '';
+      svg2.appendChild(nt);
+    });
+
+    // Center hole marker
+    const hole = document.createElementNS(svgNS,'circle');
+    hole.setAttribute('cx',cx); hole.setAttribute('cy',cy);
+    hole.setAttribute('r','5');
+    hole.setAttribute('fill','none');
+    hole.setAttribute('stroke','#8b6914'); hole.setAttribute('stroke-width','1');
+    hole.setAttribute('stroke-dasharray','2,2');
+    svg2.appendChild(hole);
+
+    // Center cross
+    ['M'+(cx-8)+','+cy+'h16','M'+cx+','+(cy-8)+'v16'].forEach(d => {
+      const p = document.createElementNS(svgNS,'path');
+      p.setAttribute('d',d); p.setAttribute('stroke','#8b6914'); p.setAttribute('stroke-width','0.5');
+      svg2.appendChild(p);
+    });
+
+    // Index mark at top
+    const pointer = document.createElementNS(svgNS,'polygon');
+    pointer.setAttribute('points', `${cx},${cy-s.r-10} ${cx-5},${cy-s.r-2} ${cx+5},${cy-s.r-2}`);
+    pointer.setAttribute('fill', '#8b1a1a'); pointer.setAttribute('opacity','0.6');
+    svg2.appendChild(pointer);
+
+    wrapper.appendChild(svg2);
+
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:12px;color:var(--ink-faded);font-style:italic;margin-top:6px;max-width:'+dim+'px;';
+    note.textContent = idx===0 ? 'Cut along dashed edge. Place at bottom.' : idx===1 ? 'Cut along dashed edge. Place in middle.' : 'Cut along dashed edge. Place on top. Align all centers and fasten with a brad.';
+    wrapper.appendChild(note);
+    container.appendChild(wrapper);
+  });
+}
+
+function downloadSVG() {
+  const container = document.getElementById('print-volvelle-container');
+  const svgs = container.querySelectorAll('svg');
+  const allSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450">
+${Array.from(svgs).map((s,i) => `<g transform="translate(${i*380},0)">${s.innerHTML}</g>`).join('\n')}
+</svg>`;
+  const blob = new Blob([allSVG], {type:'image/svg+xml'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'llull-ars-volvelle.svg';
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAB NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelector(`[onclick="showTab('${name}')"]`).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+drawVolvelle();
+buildComboGrid();
+buildTable();
+buildPrintVolvelles();
+</script>
+</body>
+</html>
